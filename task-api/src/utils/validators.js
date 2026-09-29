@@ -2,6 +2,9 @@ const VALID_STATUSES = ['todo', 'in_progress', 'done'];
 const VALID_PRIORITIES = ['low', 'medium', 'high'];
 
 const validateCreateTask = (body) => {
+  if (!body || typeof body !== 'object') {
+    return 'request body must be a valid object';
+  }
   if (!body.title || typeof body.title !== 'string' || body.title.trim() === '') {
     return 'title is required and must be a non-empty string';
   }
@@ -23,6 +26,9 @@ const validateCreateTask = (body) => {
 };
 
 const validateUpdateTask = (body) => {
+  if (!body || typeof body !== 'object') {
+    return 'request body must be a valid object';
+  }
   if (body.title !== undefined && (typeof body.title !== 'string' || body.title.trim() === '')) {
     return 'title must be a non-empty string';
   }
@@ -44,7 +50,7 @@ const validateUpdateTask = (body) => {
 };
 
 const validateAssignTask = (body) => {
-  if (!body || !body.assignee || typeof body.assignee !== 'string' || body.assignee.trim() === '') {
+  if (!body || typeof body !== 'object' || !body.assignee || typeof body.assignee !== 'string' || body.assignee.trim() === '') {
     return 'assignee is required and must be a non-empty string';
   }
   return null;

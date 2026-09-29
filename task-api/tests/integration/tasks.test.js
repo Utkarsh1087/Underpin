@@ -95,6 +95,22 @@ describe('Tasks API Integration Tests', () => {
     });
   });
 
+  describe('GET /tasks/:id', () => {
+    it('should return task when matching ID exists', async () => {
+      const task = taskService.create({ title: 'Fetch Me' });
+      const res = await request(app).get(`/tasks/${task.id}`);
+      expect(res.status).toBe(200);
+      expect(res.body.id).toBe(task.id);
+      expect(res.body.title).toBe('Fetch Me');
+    });
+
+    it('should return 404 Not Found if task ID does not exist', async () => {
+      const res = await request(app).get('/tasks/non-existent-uuid');
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({ error: 'Task not found' });
+    });
+  });
+
   describe('POST /tasks', () => {
     it('should create a task and return 201 with created object', async () => {
       const payload = {
