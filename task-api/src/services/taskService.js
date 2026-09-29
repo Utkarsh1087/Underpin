@@ -2,15 +2,38 @@ const { v4: uuidv4 } = require('uuid');
 
 let tasks = [];
 
+const parsePositiveInt = (val, defaultVal) => {
+  const parsed = parseInt(val, 10);
+  return isNaN(parsed) || parsed <= 0 ? defaultVal : parsed;
+};
+
 const getAll = () => [...tasks];
 
 const findById = (id) => tasks.find((t) => t.id === id);
 
-const getByStatus = (status) => tasks.filter((t) => t.status.includes(status));
+const getByStatus = (status) => tasks.filter((t) => t.status === status);
 
 const getPaginated = (page, limit) => {
-  const offset = page * limit;
-  return tasks.slice(offset, offset + limit);
+  const pageNum = parsePositiveInt(page, 1);
+  const limitNum = parsePositiveInt(limit, 10);
+  const offset = (pageNum - 1) * limitNum;
+  return tasks.slice(offset, offset + limitNum);
+};
+
+const getFilteredAndPaginated = (status, page, limit) => {
+  let filtered = tasks;
+  if (status) {
+    filtered = filtered.filter((t) => t.status === status);
+  }
+
+  if (page !== undefined || limit !== undefined) {
+    const pageNum = parsePositiveInt(page, 1);
+    const limitNum = parsePositiveInt(limit, 10);
+    const offset = (pageNum - 1) * limitNum;
+    return filtered.slice(offset, offset + limitNum);
+  }
+
+  return filtered;
 };
 
 const getStats = () => {
@@ -28,7 +51,7 @@ const getStats = () => {
   return { ...counts, overdue };
 };
 
-const create = ({ title, description = '', status = 'todo', priority = 'medium', dueDate = null }) => {
+const create = ({ title, description = '', status = 'todo', priority = 'medium', dueDate = null, assignee = null }) => {
   const task = {
     id: uuidv4(),
     title,
@@ -36,6 +59,7 @@ const create = ({ title, description = '', status = 'todo', priority = 'medium',
     status,
     priority,
     dueDate,
+    assignee: assignee ? assignee.trim() : null,
     completedAt: null,
     createdAt: new Date().toISOString(),
   };
@@ -47,7 +71,14 @@ const update = (id, fields) => {
   const index = tasks.findIndex((t) => t.id === id);
   if (index === -1) return null;
 
-  const updated = { ...tasks[index], ...fields };
+  // Protect immutable fields (id, createdAt) from being overwritten
+  const { id: _, createdAt: __, ...updatableFields } = fields;
+
+  if (updatableFields.assignee !== undefined) {
+    updatableFields.assignee = updatableFields.assignee ? updatableFields.assignee.trim() : null;
+  }
+
+  const updated = { ...tasks[index], ...updatableFields };
   tasks[index] = updated;
   return updated;
 };
@@ -66,9 +97,22 @@ const completeTask = (id) => {
 
   const updated = {
     ...task,
-    priority: 'medium',
     status: 'done',
     completedAt: new Date().toISOString(),
+  };
+
+  const index = tasks.findIndex((t) => t.id === id);
+  tasks[index] = updated;
+  return updated;
+};
+
+const assignTask = (id, assignee) => {
+  const task = findById(id);
+  if (!task) return null;
+
+  const updated = {
+    ...task,
+    assignee: assignee.trim(),
   };
 
   const index = tasks.findIndex((t) => t.id === id);
@@ -85,10 +129,12 @@ module.exports = {
   findById,
   getByStatus,
   getPaginated,
+  getFilteredAndPaginated,
   getStats,
   create,
   update,
   remove,
   completeTask,
+  assignTask,
   _reset,
 };
