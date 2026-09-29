@@ -4,6 +4,17 @@ const taskRoutes = require('./routes/tasks');
 const app = express();
 
 app.use(express.json());
+
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Task Manager API is running',
+    endpoints: {
+      tasks: '/tasks',
+      stats: '/tasks/stats',
+    },
+  });
+});
+
 app.use('/tasks', taskRoutes);
 
 app.use((err, req, res, next) => {

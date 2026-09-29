@@ -7,6 +7,15 @@ describe('Tasks API Integration Tests', () => {
     taskService._reset();
   });
 
+  describe('GET /', () => {
+    it('should return 200 with API status message and available endpoints', async () => {
+      const res = await request(app).get('/');
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty('message');
+      expect(res.body).toHaveProperty('endpoints');
+    });
+  });
+
   describe('GET /tasks/stats', () => {
     it('should return 200 and initial stats counts', async () => {
       const res = await request(app).get('/tasks/stats');
